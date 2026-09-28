@@ -1,4 +1,14 @@
 import { expect, test, type Page } from "@playwright/test";
+import { readFileSync } from "node:fs";
+
+/** The storage version in a Lance file's footer: u16 major and minor, 8 and 6 bytes before the end. */
+function storageVersion(path: string): string {
+  const bytes = readFileSync(path);
+  const major = bytes.readUInt16LE(bytes.length - 8);
+  const minor = bytes.readUInt16LE(bytes.length - 6);
+  // Lance writes 2.0 files with 0.3 in the footer.
+  return major === 0 && minor === 3 ? "2.0" : `${major}.${minor}`;
+}
 
 async function openSensors(page: Page, query = "") {
   await page.goto(`/?url=sensors.lance${query}`);
@@ -8,7 +18,8 @@ async function openSensors(page: Page, query = "") {
 test("shows the file facts and layout checks", async ({ page }) => {
   await openSensors(page);
   await expect(page.getByText("400,000")).toBeVisible();
-  await expect(page.getByText("Lance file 2.1")).toBeVisible();
+  const version = storageVersion("public/sensors.lance");
+  await expect(page.getByTitle(`Lance file format ${version}`)).toHaveText(`Lance ${version}`);
   await expect(page.getByRole("button", { name: /Compressed/ })).toContainText("temperature");
   await expect(page.getByRole("button", { name: /Dictionary/ })).toContainText("sensor_id");
 });
