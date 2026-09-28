@@ -1,0 +1,53 @@
+{
+  "version": "0.3",
+  "num_rows": 6,
+  "columns": [
+    { "pages": [{ "buffers": [[0, 48]], "encodings": ["Nullable", "NoNulls", "Flat"] }], "column_buffers": [] },
+    {
+      "pages": [
+        {
+          "buffers": [
+            [64, 48],
+            [128, 26]
+          ],
+          "encodings": ["Binary", "Nullable", "NoNulls", "Flat", "Flat"]
+        }
+      ],
+      "column_buffers": []
+    },
+    {
+      "pages": [{ "buffers": [[192, 48]], "encodings": ["List", "Nullable", "NoNulls", "Flat"] }],
+      "column_buffers": []
+    },
+    {
+      "pages": [
+        {
+          "buffers": [
+            [256, 48],
+            [320, 6]
+          ],
+          "encodings": ["Binary", "Nullable", "NoNulls", "Flat", "Flat"]
+        }
+      ],
+      "column_buffers": []
+    },
+    { "pages": [{ "buffers": [], "encodings": ["Struct"] }], "column_buffers": [] },
+    { "pages": [{ "buffers": [[384, 24]], "encodings": ["Nullable", "NoNulls", "Flat"] }], "column_buffers": [] },
+    { "pages": [{ "buffers": [[448, 24]], "encodings": ["Nullable", "NoNulls", "Flat"] }], "column_buffers": [] },
+    {
+      "pages": [{ "buffers": [[512, 48]], "encodings": ["List", "Nullable", "NoNulls", "Flat"] }],
+      "column_buffers": []
+    },
+    { "pages": [{ "buffers": [], "encodings": ["Struct"] }], "column_buffers": [] },
+    { "pages": [{ "buffers": [[576, 24]], "encodings": ["Nullable", "NoNulls", "Flat"] }], "column_buffers": [] },
+    { "pages": [{ "buffers": [[640, 24]], "encodings": ["Nullable", "NoNulls", "Flat"] }], "column_buffers": [] },
+    {
+      "pages": [
+        { "buffers": [[704, 96]], "encodings": ["Nullable", "NoNulls", "FixedSizeList", "Nullable", "NoNulls", "Flat"] }
+      ],
+      "column_buffers": []
+    },
+    { "pages": [{ "buffers": [[832, 48]], "encodings": ["Nullable", "NoNulls", "Flat"] }], "column_buffers": [] }
+  ],
+  "global_buffers": [[896, 383]]
+}

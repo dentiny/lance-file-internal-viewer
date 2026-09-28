@@ -1,0 +1,118 @@
+{
+  "version": "2.2",
+  "num_rows": 6,
+  "columns": [
+    {
+      "pages": [
+        {
+          "buffers": [
+            [0, 4],
+            [64, 56]
+          ],
+          "encodings": ["MiniBlockLayout", "Flat"]
+        }
+      ],
+      "column_buffers": []
+    },
+    {
+      "pages": [
+        {
+          "buffers": [
+            [128, 4],
+            [192, 64]
+          ],
+          "encodings": ["MiniBlockLayout", "Variable", "Flat"]
+        }
+      ],
+      "column_buffers": []
+    },
+    {
+      "pages": [
+        {
+          "buffers": [
+            [256, 4],
+            [320, 88],
+            [448, 16]
+          ],
+          "encodings": ["MiniBlockLayout", "Flat", "Flat", "Variable", "Flat"]
+        }
+      ],
+      "column_buffers": []
+    },
+    {
+      "pages": [
+        {
+          "buffers": [
+            [512, 4],
+            [576, 32]
+          ],
+          "encodings": ["MiniBlockLayout", "Flat"]
+        }
+      ],
+      "column_buffers": []
+    },
+    {
+      "pages": [
+        {
+          "buffers": [
+            [640, 4],
+            [704, 32]
+          ],
+          "encodings": ["MiniBlockLayout", "Flat"]
+        }
+      ],
+      "column_buffers": []
+    },
+    {
+      "pages": [
+        {
+          "buffers": [
+            [768, 4],
+            [832, 48],
+            [896, 16]
+          ],
+          "encodings": ["MiniBlockLayout", "Rle", "Flat", "Flat", "Flat"]
+        }
+      ],
+      "column_buffers": []
+    },
+    {
+      "pages": [
+        {
+          "buffers": [
+            [960, 4],
+            [1024, 48],
+            [1088, 16]
+          ],
+          "encodings": ["MiniBlockLayout", "Rle", "Flat", "Flat", "Flat"]
+        }
+      ],
+      "column_buffers": []
+    },
+    {
+      "pages": [
+        {
+          "buffers": [
+            [1152, 4],
+            [1216, 104]
+          ],
+          "encodings": ["MiniBlockLayout", "FixedSizeList", "Flat"]
+        }
+      ],
+      "column_buffers": []
+    },
+    {
+      "pages": [
+        {
+          "buffers": [
+            [1344, 4],
+            [1408, 56]
+          ],
+          "encodings": ["MiniBlockLayout", "Flat"]
+        }
+      ],
+      "column_buffers": []
+    }
+  ],
+  "global_buffers": [[1472, 383]]
+}

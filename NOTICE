@@ -1,0 +1,6 @@
+Lance File Internal Storage
+Copyright (c) 2026 dentiny
+
+The user interface, canvas painting, range-request loading and project setup are adapted from
+Parquet X-ray (https://github.com/cfahlgren1/parquet-xray), Copyright Caleb Fahlgren,
+licensed under the Apache License, Version 2.0: https://www.apache.org/licenses/LICENSE-2.0
