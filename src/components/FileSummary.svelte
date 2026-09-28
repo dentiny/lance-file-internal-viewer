@@ -24,7 +24,7 @@
     const { source, selectedColumn, selectedPage } = inspector;
     if (source === null) return;
     const col = selectedColumn === null ? null : (model.columns[selectedColumn]?.path ?? null);
-    await navigator.clipboard.writeText(shareUrl(toQuery({ ...source, col, page: selectedPage }), location));
+    await navigator.clipboard.writeText(shareUrl(toQuery({ url: source, col, page: selectedPage }), location));
     copied = true;
     setTimeout(() => (copied = false), 1500);
   }
