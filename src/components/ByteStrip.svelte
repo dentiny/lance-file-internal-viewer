@@ -2,7 +2,7 @@
   import { pieceColor } from "../lib/colors";
   import { getInspector } from "../lib/inspector.svelte";
   import { paintDominant, spanAt } from "../lib/paint";
-  import type { PagePiece, Piece } from "../lib/lance/model";
+  import { pieceColumn, type PagePiece, type Piece } from "../lib/lance/model";
 
   interface Span {
     start: number;
@@ -42,7 +42,16 @@
     const x = (offset: number) => ((offset - from) / (to - from)) * width;
     ctx.fillStyle = "#f3f4f6";
     ctx.fillRect(0, 0, layer.width, layer.height);
-    paintDominant(ctx, pieces, from, to, layer.width, layer.height, (p) => pieceColor(p, selectedColumn));
+    paintDominant(
+      ctx,
+      pieces,
+      from,
+      to,
+      layer.width,
+      layer.height,
+      (p) => pieceColor(p, selectedColumn),
+      selectedColumn === null ? undefined : (p) => pieceColumn(p)?.index === selectedColumn,
+    );
     ctx.scale(dpr, dpr);
     ctx.fillStyle = "rgb(255 255 255 / 85%)";
     for (const p of pieces) if (x(p.end) - x(p.start) > 4) ctx.fillRect(x(p.start), 0, 1, height);

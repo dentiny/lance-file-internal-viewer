@@ -1,5 +1,6 @@
 <script lang="ts">
   import ByteStrip from "./ByteStrip.svelte";
+  import ColumnBreakdown from "./ColumnBreakdown.svelte";
   import Legend from "./Legend.svelte";
   import { formatBytes, formatNumber } from "../lib/format";
   import { getInspector } from "../lib/inspector.svelte";
@@ -48,6 +49,7 @@
       <ByteStrip pieces={tail} from={model.tailStart} to={model.fileSize} label="Metadata and footer" />
     </div>
   </div>
+  <ColumnBreakdown />
   <Legend />
   <p class="hint">
     <span class="on-hover">Hover a buffer for details, click to open its page below.</span>

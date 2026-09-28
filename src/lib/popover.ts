@@ -1,7 +1,7 @@
 import { encodingSummary } from "./lance/encoding";
 import { formatBytes, formatNumber, percent, rowRange } from "./format";
 import { KINDS, SCHEMA_BUFFER_WHAT } from "./kinds";
-import type { Column, LanceModel, Page, Piece } from "./lance/model";
+import { pieceColumn, type LanceModel, type Page, type Piece } from "./lance/model";
 
 export interface PopoverContent {
   title: string;
@@ -10,12 +10,6 @@ export interface PopoverContent {
   where: string;
   what: string;
   rows: [string, string][];
-}
-
-function columnOf(p: Piece): Column | null {
-  if (p.kind === "buffer" || p.kind === "page") return p.page.column;
-  if (p.kind === "columnBuffer" || p.kind === "columnMeta") return p.column;
-  return null;
 }
 
 export function pageOf(p: Piece): Page | null {
@@ -31,7 +25,7 @@ function pageRows(page: Page): [string, string][] {
 
 /** The details shown when hovering or tapping a piece of the file. */
 export function describePiece(p: Piece, model: LanceModel): PopoverContent {
-  const column = columnOf(p);
+  const column = pieceColumn(p);
   const rows: [string, string][] = [
     ["Bytes", `${formatNumber(p.start)} – ${formatNumber(p.end)}`],
     ["Size", `${formatBytes(p.end - p.start)} · ${percent(p.end - p.start, model.fileSize)} of file`],

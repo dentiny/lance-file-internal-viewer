@@ -6,6 +6,8 @@ interface Span {
 /**
  * Paints spans onto a strip where each device pixel takes the color of the span covering most of its bytes.
  * Blending sub-pixel spans instead would turn wide files into uniform gray.
+ *
+ * A span that `wins` takes any pixel it touches, so a selected column stays visible between much larger ones.
  */
 export function paintDominant<T extends Span>(
   ctx: OffscreenCanvasRenderingContext2D,
@@ -15,6 +17,7 @@ export function paintDominant<T extends Span>(
   width: number,
   height: number,
   colorOf: (span: T) => string,
+  wins?: (span: T) => boolean,
 ): void {
   const bytesPerPx = (to - from) / width;
   let first = 0;
@@ -31,12 +34,16 @@ export function paintDominant<T extends Span>(
     while (first < spans.length && (spans[first] as T).end <= b0) first++;
     let best: T | null = null;
     let bestBytes = 0;
+    let bestWins = false;
     for (let i = first; i < spans.length && (spans[i] as T).start < b1; i++) {
       const span = spans[i] as T;
       const bytes = Math.min(b1, span.end) - Math.max(b0, span.start);
-      if (bytes > bestBytes) {
+      if (bytes <= 0) continue;
+      const winner = wins?.(span) ?? false;
+      if ((winner && !bestWins) || (winner === bestWins && bytes > bestBytes)) {
         bestBytes = bytes;
         best = span;
+        bestWins = winner;
       }
     }
     const color = best ? colorOf(best) : null;
