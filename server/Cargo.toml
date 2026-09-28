@@ -1,0 +1,27 @@
+[package]
+name = "lance-file-internal-storage"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+description = "Serves the Lance File Internal Storage UI and reads Lance files from S3-compatible object storage and NFS"
+
+[dependencies]
+anyhow = "1.0"
+axum = { version = "0.8", default-features = false, features = ["http1", "json", "query", "tokio"] }
+bytes = "1.11"
+futures = { version = "0.3", default-features = false, features = ["std"] }
+opendal = { version = "0.58", default-features = false, features = [
+    "auto-register-services",
+    "executors-tokio",
+    "http-transport-reqwest",
+    "layers-retry",
+    "layers-timeout",
+    "services-s3",
+] }
+serde = { version = "1.0", features = ["derive"] }
+tokio = { version = "1.53", features = ["fs", "io-util", "macros", "net", "rt-multi-thread"] }
+tower-http = { version = "0.7", features = ["fs", "set-header"] }
+
+[dev-dependencies]
+reqwest = { version = "0.13", default-features = false }
+tempfile = "3.23"

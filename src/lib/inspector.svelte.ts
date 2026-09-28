@@ -12,8 +12,8 @@ export interface Popover {
 /** The loaded file plus everything the user has selected in it. */
 export class Inspector {
   readonly model: LanceModel;
-  /** The remote URL being shown; local files have no shareable link. */
-  readonly source: string | null;
+  /** The location being shown, with its object storage region; local files have no shareable link. */
+  readonly source: { url: string; region: string | null } | null;
   /** How much was downloaded to open the file, e.g. "read 512 KB of 4.7 MB · 1 request · 30 ms". */
   readonly loadSummary: string;
 
@@ -31,7 +31,7 @@ export class Inspector {
 
   constructor(
     model: LanceModel,
-    source: string | null,
+    source: { url: string; region: string | null } | null,
     initial: { col: string | null; page: number | null },
     loadSummary: string,
   ) {
