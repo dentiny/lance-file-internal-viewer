@@ -1,24 +1,11 @@
 <script lang="ts">
-  import { isObjectUri, type ServerConfig } from "../lib/lance/server";
-
   interface Props {
     value: string;
-    /** Object storage region for `s3://` and `oci://` locations. */
-    region: string | null;
-    server: ServerConfig | null;
     onurl: (url: string) => void;
     onfile: (file: File) => void;
   }
 
-  let { value = $bindable(), region = $bindable(), server, onurl, onfile }: Props = $props();
-
-  const regions = $derived(server?.object_storage_regions ?? []);
-  const showRegion = $derived(regions.length > 1 && isObjectUri(value));
-  const placeholder = $derived(
-    server
-      ? "Paste s3://bucket/key.lance, an NFS path, a dataset directory, or any .lance URL"
-      : "Paste a .lance file URL, a Hub file URL, or hf://datasets/owner/repo/data/file.lance",
-  );
+  let { value = $bindable(), onurl, onfile }: Props = $props();
 
   const examples = [
     { label: "sensors (v2.1, dictionary, zstd)", url: "sensors.lance" },
@@ -44,23 +31,20 @@
 </script>
 
 <form {onsubmit}>
-  <input bind:value type="text" spellcheck="false" autocomplete="off" aria-label="Lance file URL" {placeholder} />
-  {#if showRegion}
-    <select bind:value={region} aria-label="Object storage region">
-      {#each regions as r (r)}
-        <option value={r}>{r}</option>
-      {/each}
-    </select>
-  {/if}
+  <input
+    bind:value
+    type="text"
+    spellcheck="false"
+    autocomplete="off"
+    aria-label="Lance file URL"
+    placeholder="Paste a .lance file URL, a Hub file URL, or hf://datasets/owner/repo/data/file.lance"
+  />
   <button type="submit" class="primary">Inspect</button>
   <label class="secondary">Open file<input type="file" accept=".lance" hidden {onchange} /></label>
 </form>
 
 <div class="examples">
   <span class="muted">Try</span>
-  {#each server?.nfs_roots ?? [] as root (root.logical)}
-    <button type="button" class="storage" onclick={() => onurl(root.logical)}>NFS {root.logical}</button>
-  {/each}
   {#each examples as example (example.url)}
     <button type="button" onclick={() => onurl(example.url)}>{example.label}</button>
   {/each}
@@ -105,21 +89,6 @@
     border-radius: var(--radius);
     color: var(--text-2);
     cursor: pointer;
-  }
-
-  select {
-    padding: 0 8px;
-    border: 1px solid #d1d5db;
-    border-radius: var(--radius);
-    background: var(--surface);
-    font: inherit;
-    font-family: var(--font-mono);
-    font-size: 12.5px;
-  }
-
-  .examples button.storage {
-    border-color: var(--accent-line);
-    font-family: var(--font-mono);
   }
 
   .examples {

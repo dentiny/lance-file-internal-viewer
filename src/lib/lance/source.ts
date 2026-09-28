@@ -1,5 +1,3 @@
-import { responseError } from "./server";
-
 /** One suffix request returns the file size, the footer and usually all column metadata and the schema. */
 const TAIL_BYTES = 512 * 1024;
 
@@ -37,7 +35,7 @@ export function resolveUrl(input: string): string {
 export async function urlSource(url: string): Promise<Source> {
   const fetchRange = async (range: string) => {
     const res = await fetch(url, { headers: { Range: `bytes=${range}` } });
-    if (!res.ok) throw await responseError(res);
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText || "request failed"}`);
     return res;
   };
   const read = async (start: number, end: number) => (await fetchRange(`${start}-${end - 1}`)).arrayBuffer();

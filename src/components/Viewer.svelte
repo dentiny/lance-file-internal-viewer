@@ -16,7 +16,7 @@
     const { source, selectedColumn, selectedPage, model } = inspector;
     if (source === null) return;
     const col = selectedColumn === null ? null : (model.columns[selectedColumn]?.path ?? null);
-    publishQuery(toQuery({ ...source, col, page: selectedPage }));
+    publishQuery(toQuery({ url: source, col, page: selectedPage }));
   });
 </script>
 
