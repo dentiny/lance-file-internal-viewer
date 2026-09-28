@@ -1,5 +1,33 @@
-node_modules
-dist
-playwright-report
-test-results
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.vite/
+*.tsbuildinfo
+
+# Rust build output, e.g. from an editor's rust-analyzer
+target/
+
+# Test output
+test-results/
+playwright-report/
+coverage/
+
+# Python, from `uv run scripts/make-fixtures.py`
+__pycache__/
+.venv/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.*
+
+# Editors and OS
+.idea/
+.vscode/
+*.swp
 .DS_Store

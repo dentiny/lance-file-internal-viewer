@@ -229,6 +229,22 @@ export function buildModel(name: string, fileSize: number, metadata: FileMetadat
   };
 }
 
+/** The column a byte range belongs to, if it belongs to one. */
+export function pieceColumn(p: Piece): Column | null {
+  if (p.kind === "buffer" || p.kind === "page") return p.page.column;
+  if (p.kind === "columnBuffer" || p.kind === "columnMeta") return p.column;
+  return null;
+}
+
+/** Columns that store data, largest first, with their share of all column bytes. */
+export function columnShares(model: LanceModel): { column: Column; share: number }[] {
+  const total = model.columns.reduce((sum, c) => sum + c.bytes, 0);
+  return model.columns
+    .filter((c) => c.bytes > 0)
+    .map((column) => ({ column, share: column.bytes / total }))
+    .sort((a, b) => b.share - a.share || a.column.index - b.column.index);
+}
+
 /** How many of a column's pages use each encoding summary, most common first. */
 export function encodingMix(column: Column): [string, number][] {
   const counts = new Map<string, number>();

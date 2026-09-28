@@ -18,7 +18,6 @@ Open `http://localhost:5173/?url=sensors.lance` to load the bundled example, or 
 ```sh
 npm run verify       # lint, type-check, unit tests, build
 npm run test:e2e     # browser tests (first run: npx playwright install chromium)
-REMOTE=1 npm test    # also parse a few real files on the Hugging Face Hub
 ```
 
 `npm run format` fixes formatting and autofixable lint errors.
