@@ -2,7 +2,7 @@
 
 See how a [Lance](https://github.com/lance-format/lance) data file is laid out on disk: columns, pages, page buffers, encodings, column metadata, the schema and the footer.
 
-![A Lance file with a page's buffers and encoding open and a buffer's details in a popover](docs/overview.png)
+![A 73.7 GB LAION-1M shard from the Hub with its image column selected: the file strip, the byte share of each column, and the column's pages](docs/overview.png)
 
 Paste a Hub URL, an `hf://` path, any URL that allows CORS range requests, or open a local `.lance` file. Only the footer, column metadata and schema are downloaded, so a 20 GB file opens after reading 512 KB. Files written as Lance 2.0, 2.1, 2.2 and 2.3 are supported; legacy v0.x files are not.
 

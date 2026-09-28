@@ -6,8 +6,6 @@
 
   const inspector = getInspector();
   const { model } = inspector;
-  const { footer } = model;
-
   const stats = [
     { label: "Size", value: formatBytes(model.fileSize) },
     { label: "Rows", value: formatNumber(model.numRows) },
@@ -15,9 +13,6 @@
     { label: "Pages", value: formatNumber(model.columns.reduce((sum, c) => sum + c.pages.length, 0)) },
     { label: "Metadata", value: formatBytes(model.metadataBytes) },
   ];
-  const raw = `${footer.major}.${footer.minor}`;
-  const format = `Lance file ${model.version}${raw === model.version ? "" : ` · footer says ${raw}`}`;
-
   let copied = $state(false);
 
   async function copyLink() {
@@ -45,10 +40,6 @@
         <dd>{stat.value}</dd>
       </div>
     {/each}
-    <div class="format">
-      <dt>Format</dt>
-      <dd class="mono">{format}</dd>
-    </div>
   </dl>
   {#each model.warnings as warning (warning)}
     <p class="warning">{warning}</p>
@@ -105,7 +96,7 @@
 
   dl {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr)) minmax(0, 1.6fr);
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 12px;
     margin: 0;
     padding: 12px 16px;
@@ -123,12 +114,6 @@
     font-weight: 600;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-
-  .format dd {
-    margin-top: 4px;
-    font-size: 12.5px;
-    font-weight: 500;
   }
 
   .warning {
@@ -151,9 +136,6 @@
     dl {
       grid-template-columns: repeat(3, minmax(0, 1fr));
       padding: 12px;
-    }
-    .format {
-      grid-column: 1 / -1;
     }
   }
 </style>

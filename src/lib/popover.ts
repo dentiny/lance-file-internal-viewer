@@ -70,7 +70,7 @@ export function describePiece(p: Piece, model: LanceModel): PopoverContent {
     case "footer": {
       const f = model.footer;
       rows.push(
-        ["Version", `${f.major}.${f.minor}${f.version !== `${f.major}.${f.minor}` ? ` (Lance ${f.version})` : ""}`],
+        ["Version", f.version],
         ["Columns", formatNumber(f.numColumns)],
         ["Global buffers", formatNumber(f.numGlobalBuffers)],
         ["Metadata at", formatNumber(f.columnMetaStart)],

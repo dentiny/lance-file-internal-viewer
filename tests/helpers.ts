@@ -7,7 +7,7 @@ export async function loadFixture(path: string): Promise<Loaded> {
   return loadLance(path.split("/").pop() ?? path, () => fileSource(new Blob([bytes])));
 }
 
-/** What Lance's own reader reported for a fixture, written by `scripts/make-fixtures.py`. */
+/** What Lance's own reader (pylance) reported for a fixture when it was written. */
 export interface Expected {
   version: string;
   num_rows: number;

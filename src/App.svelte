@@ -2,6 +2,7 @@
   import EmptyState from "./components/EmptyState.svelte";
   import GitHubLink from "./components/GitHubLink.svelte";
   import SourceInput from "./components/SourceInput.svelte";
+  import VersionBadge from "./components/VersionBadge.svelte";
   import Viewer from "./components/Viewer.svelte";
   import { Inspector } from "./lib/inspector.svelte";
   import { formatBytes } from "./lib/format";
@@ -78,7 +79,10 @@
   <header>
     <div class="title">
       <h1><span class="logo" aria-hidden="true">▦</span> Lance File Internal Storage</h1>
-      <GitHubLink />
+      <div class="actions">
+        {#if inspector}<VersionBadge model={inspector.model} />{/if}
+        <GitHubLink />
+      </div>
     </div>
     <p>See how a Lance file is laid out, byte by byte. Only the footer, column metadata and schema are downloaded.</p>
   </header>
@@ -116,6 +120,12 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 
   h1 {
