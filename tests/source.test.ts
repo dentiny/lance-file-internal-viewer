@@ -1,0 +1,43 @@
+import { describe, expect, it } from "vitest";
+import { decode } from "../src/lib/lance/protobuf";
+import { resolveUrl } from "../src/lib/lance/source";
+import { fromQuery, toQuery } from "../src/lib/share";
+
+describe("resolveUrl", () => {
+  it("turns Hub blob links and hf:// paths into resolve URLs", () => {
+    expect(resolveUrl("https://huggingface.co/datasets/a/b/blob/main/data/x.lance")).toBe(
+      "https://huggingface.co/datasets/a/b/resolve/main/data/x.lance",
+    );
+    expect(resolveUrl("hf://datasets/lance-format/mnist-lance/data/test.lance/data/f.lance")).toBe(
+      "https://huggingface.co/datasets/lance-format/mnist-lance/resolve/main/data/test.lance/data/f.lance",
+    );
+    expect(resolveUrl(" https://example.com/f.lance ")).toBe("https://example.com/f.lance");
+  });
+});
+
+describe("share query", () => {
+  it("round-trips the file, column and page", () => {
+    const selection = { url: "hf://datasets/a/b/f.lance", col: "points.item.x", page: 3 };
+    expect(fromQuery(toQuery(selection))).toEqual(selection);
+  });
+
+  it("ignores a malformed page and a page without a column", () => {
+    expect(fromQuery("?url=x.lance&col=a&page=abc")).toEqual({ url: "x.lance", col: "a", page: null });
+    expect(toQuery({ url: "x.lance", col: null, page: 2 })).toBe("url=x.lance");
+    expect(fromQuery("?page=1")).toBeNull();
+  });
+});
+
+describe("protobuf", () => {
+  it("reads negative int32s, packed repeated fields and nested messages", () => {
+    // field 4 = -1 (int32 as 10-byte varint), field 1 = packed [1, 300], field 2 = { field 1 = "hi" }
+    const bytes = new Uint8Array([
+      0x20, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01, 0x0a, 0x03, 0x01, 0xac, 0x02, 0x12, 0x04, 0x0a,
+      0x02, 0x68, 0x69,
+    ]);
+    const m = decode(bytes);
+    expect(m.int32(4)).toBe(-1);
+    expect(m.uints(1)).toEqual([1, 300]);
+    expect(m.message(2)?.string(1)).toBe("hi");
+  });
+});
