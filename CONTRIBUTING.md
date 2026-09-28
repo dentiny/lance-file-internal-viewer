@@ -21,6 +21,13 @@ npm run test:e2e     # browser tests (first run: npx playwright install chromium
 REMOTE=1 npm test    # also parse a few real files on the Hugging Face Hub
 ```
 
+If you changed `server/` or how the UI talks to it:
+
+```sh
+(cd server && cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test)
+./scripts/server-e2e.sh   # browser tests against a local S3 (moto) and NFS directory; needs uv
+```
+
 `npm run format` fixes formatting and autofixable lint errors.
 
 ## Where things live
@@ -32,6 +39,8 @@ REMOTE=1 npm test    # also parse a few real files on the Hugging Face Hub
 | `src/lib/lance/encoding.ts`   | Decodes page and column encodings (`lance.encodings` for 2.0, `lance.encodings21` for 2.1+) into trees, and names each page buffer.                                  |
 | `src/lib/lance/schema.ts`     | Maps schema fields to physical columns (every field in 2.0, leaves in 2.1+) and renders the schema.                                                                  |
 | `src/lib/lance/model.ts`      | Lays out every byte range in the file.                                                                                                                               |
+| `src/lib/lance/server.ts`     | Talks to the Rust server for `s3://`, `oci://` and NFS locations.                                                                                                    |
+| `server/`                     | The Rust server: reads object storage and NFS, serves byte ranges and directory listings, and serves the UI. See [server/README.md](server/README.md).               |
 | `src/lib/inspector.svelte.ts` | The loaded file plus the user's selection (column, page, popover). Components read it from context.                                                                  |
 | `src/lib/popover.ts`          | What the popover says about each kind of byte range.                                                                                                                 |
 | `src/lib/paint.ts`            | Canvas helpers for the file strip: per-pixel dominant color and hit testing.                                                                                         |

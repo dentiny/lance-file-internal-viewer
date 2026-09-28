@@ -1,6 +1,6 @@
 node_modules
 dist
+server/target
 playwright-report
 test-results
-.DS_Store
-server/target
+.git
