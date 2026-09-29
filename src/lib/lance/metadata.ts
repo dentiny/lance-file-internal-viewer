@@ -29,8 +29,6 @@ export interface PageMeta {
   buffers: BufferRange[];
   /** Rows in the page. */
   length: number;
-  /** Top-level row number of the page's first row. */
-  priority: number;
   encoding: EncodingRef;
 }
 
@@ -127,7 +125,6 @@ export function parseColumnMeta(bytes: Uint8Array, meta: BufferRange): ColumnMet
       buffers: buffers(p, 1, 2),
       length: p.uint(3),
       encoding: encodingRef(p.message(4)),
-      priority: p.uint(5),
     })),
     buffers: buffers(m, 3, 4),
     meta,

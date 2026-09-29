@@ -128,7 +128,8 @@ export function buildModel(name: string, fileSize: number, metadata: FileMetadat
       const page: Page = {
         column,
         index: i,
-        firstRow: p.priority,
+        // Pages hold consecutive rows. The page's `priority` field is its first row only from 2.1; 2.0 writes 0.
+        firstRow: column.numRows,
         numRows: p.length,
         encoding: pageEncoding,
         buffers: [],
