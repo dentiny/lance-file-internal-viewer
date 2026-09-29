@@ -29,7 +29,7 @@ const uses = (c: Column, test: (compression: string[], features: string[]) => bo
 /** How the file was written, as far as it affects readers: layouts, page sizes, compression and dictionaries. */
 export function layoutChecks(model: LanceModel): Check[] {
   const { columns } = model;
-  const structural = model.version !== "2.0";
+  const structural = model.footer.version !== "2.0";
   const small = smallPageColumns(columns).map((c) => c.path);
   const compressed = columns.filter((c) => uses(c, (compression) => compression.length > 0));
   const schemes = [...new Set(compressed.flatMap((c) => c.pages.flatMap((p) => p.encoding.compression)))];
@@ -43,7 +43,7 @@ export function layoutChecks(model: LanceModel): Check[] {
       passed: structural,
       columns: [],
       detail: structural
-        ? `Written as ${model.version} with structural layouts: readers fetch the mini-block chunks or values a row needs instead of whole pages.`
+        ? `Written as ${model.footer.version} with structural layouts: readers fetch the mini-block chunks or values a row needs instead of whole pages.`
         : "Written as 2.0 with the legacy encodings, which often read more of a page than a point lookup needs.",
     },
     {

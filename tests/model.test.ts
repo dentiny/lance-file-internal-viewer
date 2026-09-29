@@ -42,8 +42,8 @@ describe.each(files)("%s", async (name) => {
 
   it("reads the metadata from the tail in one request", () => {
     expect(counter.requests).toBe(1);
-    expect(`${model.footer.major}.${model.footer.minor}`).toBe(want.version);
-    expect(model.version).toBe(want.version === "0.3" ? "2.0" : want.version);
+    // Lance's reader reports the footer's numbers, which are 0.3 for 2.0 files.
+    expect(model.footer.version).toBe(want.version === "0.3" ? "2.0" : want.version);
     expect(model.numRows).toBe(want.num_rows);
   });
 

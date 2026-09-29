@@ -8,12 +8,14 @@
 
   /** Columns with many pages show this many until asked for the rest. */
   const MAX_PAGES = 100;
+  /** The size bar is a few hundred pixels wide; past this many pages, seams between them would be sub-pixel. */
+  const MAX_SEAMS = 64;
 
   let { column, maxBytes }: { column: Column; maxBytes: number } = $props();
 
   const inspector = getInspector();
   const open = $derived(inspector.selectedColumn === column.index);
-  const maxPage = $derived(Math.max(1, ...column.pages.map((p) => p.bytes)));
+  const maxPage = $derived(column.pages.reduce((max, p) => Math.max(max, p.bytes), 1));
   let showAll = $state(false);
   const shown = $derived(
     showAll || (inspector.selectedPage ?? 0) >= MAX_PAGES ? column.pages : column.pages.slice(0, MAX_PAGES),
@@ -24,6 +26,7 @@
     const total = column.pages.reduce((sum, p) => sum + p.bytes, 0);
     if (!total) return "none";
     const color = columnColor(column.index, inspector.selectedColumn);
+    if (column.pages.length > MAX_SEAMS) return color;
     let at = 0;
     const stops = column.pages.flatMap((p) => {
       const from = (at / total) * 100;

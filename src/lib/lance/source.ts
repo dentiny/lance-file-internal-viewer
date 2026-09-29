@@ -3,7 +3,8 @@ const TAIL_BYTES = 512 * 1024;
 
 export interface AsyncBuffer {
   byteLength: number;
-  slice(start: number, end?: number): Promise<ArrayBuffer>;
+  /** Bytes `start..end`; reads inside the prefetched tail are views into it, not copies. */
+  slice(start: number, end: number): Promise<Uint8Array>;
 }
 
 /** A readable Lance file whose last bytes were already fetched. */
@@ -60,15 +61,16 @@ export async function fileSource(file: Blob): Promise<Source> {
 /** Serves reads inside the prefetched tail from memory and counts the rest. */
 export function tailBuffer({ byteLength, tail, requests, read }: Source): { file: AsyncBuffer; counter: ReadCounter } {
   const tailStart = byteLength - tail.byteLength;
+  const tailBytes = new Uint8Array(tail);
   const counter = { bytes: tail.byteLength, requests };
   const file: AsyncBuffer = {
     byteLength,
-    slice: async (start, end = byteLength) => {
-      if (start >= tailStart) return tail.slice(start - tailStart, end - tailStart);
+    slice: async (start, end) => {
+      if (start >= tailStart) return tailBytes.subarray(start - tailStart, end - tailStart);
       const result = await read(start, end);
       counter.bytes += result.byteLength;
       counter.requests += 1;
-      return result;
+      return new Uint8Array(result);
     },
   };
   return { file, counter };

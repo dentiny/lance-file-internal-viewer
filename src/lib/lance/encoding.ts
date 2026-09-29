@@ -6,6 +6,8 @@ export interface EncodingNode {
   name: string;
   detail?: string;
   children: { role: string; node: EncodingNode }[];
+  /** General-purpose compression this step applies, e.g. `zstd`. */
+  compression?: string;
 }
 
 export interface PageEncoding {
@@ -40,11 +42,17 @@ const REPDEF_LAYERS = [
 
 const NOISE = new Set(["flat", "variable", "struct", "nullable", "values"]);
 
-function node(name: string, detail?: string, children: [string, EncodingNode | null][] = []): EncodingNode {
+function node(
+  name: string,
+  detail?: string,
+  children: [string, EncodingNode | null][] = [],
+  compression?: string,
+): EncodingNode {
   return {
     name,
     detail: detail || undefined,
     children: children.flatMap(([role, n]) => (n ? [{ role, node: n }] : [])),
+    compression,
   };
 }
 
@@ -61,14 +69,29 @@ function bits(from: number, to?: number): string {
 
 const SCHEMES = ["default", "lz4", "zstd"];
 
-function bufferCompression(m: Message | null): string | undefined {
-  if (!m) return undefined;
-  const scheme = SCHEMES[m.uint(1)] ?? `scheme ${m.uint(1)}`;
-  return m.has(2) ? `${scheme}(${m.int32(2)})` : scheme;
+interface Compression {
+  scheme: string;
+  level?: number;
 }
 
-function withCompression(detail: string, compression: string | undefined): string {
-  return compression ? `${detail} · ${compression}` : detail;
+function bufferCompression(m: Message | null): Compression | undefined {
+  if (!m) return undefined;
+  const scheme = SCHEMES[m.uint(1)] ?? `scheme ${m.uint(1)}`;
+  return m.has(2) ? { scheme, level: m.int32(2) } : { scheme };
+}
+
+function label(c: Compression): string {
+  return c.level === undefined ? c.scheme : `${c.scheme}(${c.level})`;
+}
+
+function withCompression(detail: string, c: Compression | undefined): string {
+  return c ? `${detail} · ${label(c)}` : detail;
+}
+
+/** A step that only applies general-purpose compression to the encoding under it. */
+function general(c: Compression | undefined, children: [string, EncodingNode | null][]): EncodingNode {
+  if (!c) return node("general", undefined, children);
+  return node(c.scheme, c.level === undefined ? undefined : `level ${c.level}`, children, c.scheme);
 }
 
 function compressive(m: Message | null): EncodingNode | null {
@@ -91,16 +114,22 @@ function compressive(m: Message | null): EncodingNode | null {
   if (!which) return node("unknown");
   const e = m.message(which.field) as Message;
   switch (which.name) {
-    case "flat":
-      return node("flat", withCompression(bits(e.uint(1)), bufferCompression(e.message(2))));
-    case "variable":
-      return node("variable", bufferCompression(e.message(2)), [["offsets", compressive(e.message(1))]]);
+    case "flat": {
+      const c = bufferCompression(e.message(2));
+      return node("flat", withCompression(bits(e.uint(1)), c), [], c?.scheme);
+    }
+    case "variable": {
+      const c = bufferCompression(e.message(2));
+      return node("variable", c && label(c), [["offsets", compressive(e.message(1))]], c?.scheme);
+    }
     case "constant":
       return node("constant", `${e.bytes(1).length} bytes`);
     case "bitpacking":
       return node("bitpacking", bits(e.uint(1)), [["values", compressive(e.message(3))]]);
-    case "inline bitpacking":
-      return node("inline bitpacking", withCompression(bits(e.uint(1)), bufferCompression(e.message(2))));
+    case "inline bitpacking": {
+      const c = bufferCompression(e.message(2));
+      return node("inline bitpacking", withCompression(bits(e.uint(1)), c), [], c?.scheme);
+    }
     case "fsst":
       return node("fsst", `${e.bytes(1).length} B symbol table`, [["values", compressive(e.message(2))]]);
     case "dictionary":
@@ -116,7 +145,7 @@ function compressive(m: Message | null): EncodingNode | null {
     case "byte stream split":
       return node("byte stream split", undefined, [["values", compressive(e.message(1))]]);
     case "general":
-      return node(bufferCompression(e.message(1)) ?? "general", undefined, [["values", compressive(e.message(3))]]);
+      return general(bufferCompression(e.message(1)), [["values", compressive(e.message(3))]]);
     case "fixed-size list":
       return node("fixed-size list", `×${e.uint(1)}${e.bool(3) ? " · nullable" : ""}`, [
         ["values", compressive(e.message(2))],
@@ -235,10 +264,10 @@ function claim(refs: BufferRefs, buffer: Message | null, role: string): void {
   if (type === "page" || type === "column") refs[type][buffer.uint(1)] ??= role;
 }
 
-function legacyCompression(m: Message | null): string | undefined {
+function legacyCompression(m: Message | null): Compression | undefined {
   if (!m) return undefined;
   const scheme = m.string(1);
-  return m.has(2) ? `${scheme}(${m.int32(2)})` : scheme;
+  return m.has(2) ? { scheme, level: m.int32(2) } : { scheme };
 }
 
 function arrayEncoding(m: Message | null, refs: BufferRefs, role: string): EncodingNode | null {
@@ -270,9 +299,11 @@ function arrayEncoding(m: Message | null, refs: BufferRefs, role: string): Encod
   const e = m.message(which.field) as Message;
   const child = (field: number, childRole: string) => arrayEncoding(e.message(field), refs, childRole);
   switch (which.name) {
-    case "flat":
+    case "flat": {
       claim(refs, e.message(2), role);
-      return node("flat", withCompression(bits(e.uint(1)), legacyCompression(e.message(3))));
+      const c = legacyCompression(e.message(3));
+      return node("flat", withCompression(bits(e.uint(1)), c), [], c?.scheme);
+    }
     case "nullable": {
       const n = e.oneof({ 1: "no nulls", 2: "some nulls", 3: "all null" });
       const inner = n ? (e.message(n.field) as Message) : null;
@@ -331,11 +362,11 @@ function arrayEncoding(m: Message | null, refs: BufferRefs, role: string): Encod
     case "packed struct mini-block":
       return node("packed struct", `${e.uints(2).length} fields`, [["values", child(1, role)]]);
     case "block":
-      return node(e.string(1) || "block");
+      return general(e.string(1) ? { scheme: e.string(1) } : undefined, []);
     case "rle":
       return node("rle", bits(e.uint(1)));
     case "general mini-block":
-      return node(legacyCompression(e.message(2)) ?? "general", undefined, [["values", child(1, role)]]);
+      return general(legacyCompression(e.message(2)), [["values", child(1, role)]]);
     case "byte stream split":
       return node("byte stream split", bits(e.uint(1)));
   }
@@ -363,17 +394,14 @@ function walk(n: EncodingNode | null, visit: (n: EncodingNode) => void): void {
   for (const c of n.children) walk(c.node, visit);
 }
 
-const COMPRESSION = /^(zstd|lz4|gzip|snappy|brotli)\b/;
-
 function facts(tree: EncodingNode | null): { compression: string[]; features: string[] } {
   const compression = new Set<string>();
   const features = new Set<string>();
   walk(tree, (n) => {
-    for (const part of [n.name, ...(n.detail?.split(" · ") ?? [])]) {
-      const scheme = part.match(COMPRESSION)?.[1];
-      if (scheme) compression.add(scheme);
-    }
-    if (!COMPRESSION.test(n.name) && !NOISE.has(n.name)) features.add(n.name.replace(/^inline /, ""));
+    if (n.compression) compression.add(n.compression);
+    // Steps named after their scheme (`zstd` around mini-blocks) are compression, not an encoding feature.
+    const wrapper = n.name === n.compression || n.name === "general";
+    if (!wrapper && !NOISE.has(n.name)) features.add(n.name.replace(/^inline /, ""));
     // 2.1+ mini-block pages keep their dictionary beside the values instead of wrapping them.
     if (n.children.some((c) => c.role === "dictionary")) features.add("dictionary");
   });

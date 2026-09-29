@@ -4,6 +4,8 @@
  */
 export type Value = number | bigint | Uint8Array;
 
+const utf8 = new TextDecoder();
+
 export class Message {
   constructor(readonly fields: Map<number, Value[]>) {}
 
@@ -23,7 +25,8 @@ export class Message {
     const v = this.last(field);
     if (v === undefined) return 0;
     if (v instanceof Uint8Array) throw new Error(`field ${field} is length-delimited, not a number`);
-    return Number(BigInt.asIntN(32, BigInt(v)));
+    // Negative int32s are sign-extended to 64 bits on the wire, so only they arrive as bigints.
+    return typeof v === "number" ? v | 0 : Number(BigInt.asIntN(32, v));
   }
 
   bool(field: number): boolean {
@@ -38,7 +41,7 @@ export class Message {
   }
 
   string(field: number): string {
-    return new TextDecoder().decode(this.bytes(field));
+    return utf8.decode(this.bytes(field));
   }
 
   message(field: number): Message | null {
@@ -75,8 +78,9 @@ export class Message {
 
   /** The first of `names` that is set, for `oneof` groups. */
   oneof<T extends string>(names: Record<number, T>): { name: T; field: number } | null {
-    for (const [field, name] of Object.entries(names) as [string, T][]) {
-      if (this.has(Number(field))) return { name, field: Number(field) };
+    for (const key in names) {
+      const field = Number(key);
+      if (this.fields.has(field)) return { name: names[field] as T, field };
     }
     return null;
   }
