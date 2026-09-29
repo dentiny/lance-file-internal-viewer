@@ -79,10 +79,8 @@ export interface LanceModel {
   name: string;
   fileSize: number;
   footer: Footer;
-  version: string;
   numRows: number;
   fields: LanceField[];
-  schemaMetadata: Record<string, string>;
   columns: Column[];
   /** Every page, sorted by where it starts in the file. */
   pages: Page[];
@@ -127,7 +125,6 @@ export function buildModel(name: string, fileSize: number, metadata: FileMetadat
     meta.pages.forEach((p, i) => {
       const pageEncoding = decodePageEncoding(p.encoding);
       pageEncoding.columnBufferRoles.forEach((role, b) => (columnRoles[b] ??= role));
-      const live = p.buffers.filter((b) => b.end > b.start);
       const page: Page = {
         column,
         index: i,
@@ -135,9 +132,9 @@ export function buildModel(name: string, fileSize: number, metadata: FileMetadat
         numRows: p.length,
         encoding: pageEncoding,
         buffers: [],
-        start: live.length ? Math.min(...live.map((b) => b.start)) : 0,
-        end: live.length ? Math.max(...live.map((b) => b.end)) : 0,
-        bytes: live.reduce((sum, b) => sum + b.end - b.start, 0),
+        start: Infinity,
+        end: 0,
+        bytes: 0,
       };
       p.buffers.forEach((b, buffer) => {
         if (b.end <= b.start) return;
@@ -149,8 +146,12 @@ export function buildModel(name: string, fileSize: number, metadata: FileMetadat
           role: pageEncoding.bufferRoles[buffer] || null,
         };
         page.buffers.push(piece);
+        page.start = Math.min(page.start, b.start);
+        page.end = Math.max(page.end, b.end);
+        page.bytes += b.end - b.start;
         pieces.push(piece);
       });
+      if (!page.buffers.length) page.start = 0;
       column.pages.push(page);
       column.numRows += page.numRows;
       column.bytes += page.bytes;
@@ -190,16 +191,14 @@ export function buildModel(name: string, fileSize: number, metadata: FileMetadat
 
   // Fill the holes between known ranges: alignment padding when small, unindexed data (e.g. blob payloads) when not.
   let padding = 0;
-  const gaps: FilePiece[] = [];
+  const all: Piece[] = [];
   let at = 0;
   for (const p of pieces) {
-    if (p.start > at) {
-      if (p.start - at >= ALIGNMENT) gaps.push({ kind: "gap", start: at, end: p.start });
-      else padding += p.start - at;
-    }
+    if (p.start - at >= ALIGNMENT) all.push({ kind: "gap", start: at, end: p.start });
+    else if (p.start > at) padding += p.start - at;
+    all.push(p);
     at = Math.max(at, p.end);
   }
-  const all = [...pieces, ...gaps].sort((a, b) => a.start - b.start || a.end - b.end);
 
   const descriptor = metadata.globalBuffers[0];
   const tailStart = Math.min(
@@ -215,10 +214,8 @@ export function buildModel(name: string, fileSize: number, metadata: FileMetadat
     name,
     fileSize,
     footer,
-    version: footer.version,
     numRows: metadata.numRows,
     fields: metadata.fields,
-    schemaMetadata: metadata.schemaMetadata,
     columns,
     pages,
     pieces: all,

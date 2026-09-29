@@ -5,7 +5,7 @@
 
   const inspector = getInspector();
   const { columns } = inspector.model;
-  const maxBytes = Math.max(1, ...columns.map((c) => c.bytes));
+  const maxBytes = columns.reduce((max, c) => Math.max(max, c.bytes), 1);
   let list: HTMLDivElement;
 
   // Selections made outside the list (file map, schema, a shared link) scroll it to the open column or page.

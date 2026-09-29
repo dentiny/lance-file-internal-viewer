@@ -4,7 +4,7 @@
   let { model }: { model: LanceModel } = $props();
 </script>
 
-<span class="version mono" title="Lance file format {model.version}">Lance {model.version}</span>
+<span class="version mono" title="Lance file format {model.footer.version}">Lance {model.footer.version}</span>
 
 <style>
   .version {

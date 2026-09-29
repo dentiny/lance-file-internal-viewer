@@ -2,7 +2,10 @@
   import { columnColor } from "../lib/colors";
   import { formatBytes, formatNumber, percent, rowRange } from "../lib/format";
   import { getInspector } from "../lib/inspector.svelte";
-  import { columnAt, encodingMix } from "../lib/lance/model";
+  import { columnAt, encodingMix, type Page } from "../lib/lance/model";
+
+  /** The row lane is a few hundred pixels wide; columns with more pages than this share segments. */
+  const MAX_SEGMENTS = 200;
 
   let { column: index, depth }: { column: number; depth: number } = $props();
 
@@ -16,10 +19,30 @@
   const metadata = $derived(Object.entries(field?.metadata ?? {}));
   const metaBytes = $derived(column.meta.end - column.meta.start);
 
-  function open(event: MouseEvent, page: number) {
+  /** Consecutive pages merged so the lane never has more than MAX_SEGMENTS elements. */
+  const segments = $derived.by(() => {
+    const per = Math.ceil(column.pages.length / MAX_SEGMENTS);
+    const out: { first: Page; last: Page; bytes: number }[] = [];
+    for (let i = 0; i < column.pages.length; i += per) {
+      const group = column.pages.slice(i, i + per);
+      out.push({
+        first: group[0] as Page,
+        last: group[group.length - 1] as Page,
+        bytes: group.reduce((sum, p) => sum + p.bytes, 0),
+      });
+    }
+    return out;
+  });
+
+  function describe({ first, last, bytes }: (typeof segments)[number]): string {
+    const rows = rowRange(first.firstRow, last.firstRow + last.numRows - first.firstRow);
+    const pages = first === last ? `Page ${first.index}` : `Pages ${first.index}–${last.index}`;
+    return `${pages}: rows ${rows}, ${formatBytes(bytes)}`;
+  }
+
+  function open(event: MouseEvent, page: Page) {
     event.stopPropagation();
-    const target = column.pages[page];
-    if (target) inspector.togglePage(target, { reveal: true, inPage: true });
+    inspector.togglePage(page, { reveal: true, inPage: true });
   }
 </script>
 
@@ -47,15 +70,17 @@
   {#if column.pages.length}
     <div class="label">Pages by row <span class="muted">· click one to open it</span></div>
     <div class="lane" role="group" aria-label="Pages of {column.path} by row">
-      {#each column.pages as page (page.index)}
+      {#each segments as segment, i (segment.first.index)}
+        {@const { first, last } = segment}
+        {@const selected = inspector.selectedPage}
         <button
           type="button"
-          class:selected={inspector.selectedPage === page.index}
-          style:left="{(page.firstRow / totalRows) * 100}%"
-          style:width="{(page.numRows / totalRows) * 100}%"
-          style:background={columnColor(column.index, column.index, page.index % 2 === 1)}
-          title="Page {page.index}: rows {rowRange(page.firstRow, page.numRows)}, {formatBytes(page.bytes)}"
-          onclick={(event) => open(event, page.index)}
+          class:selected={selected !== null && selected >= first.index && selected <= last.index}
+          style:left="{(first.firstRow / totalRows) * 100}%"
+          style:width="{((last.firstRow + last.numRows - first.firstRow) / totalRows) * 100}%"
+          style:background={columnColor(column.index, column.index, i % 2 === 1)}
+          title={describe(segment)}
+          onclick={(event) => open(event, first)}
         ></button>
       {/each}
     </div>
@@ -69,7 +94,7 @@
     </ul>
   {:else}
     <p class="muted empty">
-      No pages{model.version === "2.0" ? ": in 2.0 a struct column only exists to hold its children." : "."}
+      No pages{model.footer.version === "2.0" ? ": in 2.0 a struct column only exists to hold its children." : "."}
     </p>
   {/if}
 

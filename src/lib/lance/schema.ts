@@ -96,8 +96,10 @@ function annotations(f: LanceField): string | undefined {
   return text || undefined;
 }
 
-export function schemaLines(fields: LanceField[], columns: ColumnField[]): SchemaLine[] {
-  const columnOf = new Map(columns.map((c, i) => [c.field, i]));
+/** `columns` are the file's physical columns in order, each with the field it stores. */
+export function schemaLines(fields: LanceField[], columns: { field: LanceField | null }[]): SchemaLine[] {
+  const columnOf = new Map<LanceField, number>();
+  columns.forEach((c, i) => c.field && columnOf.set(c.field, i));
   const lines: SchemaLine[] = [{ depth: 0, name: "schema", punct: "{" }];
   const visit = (f: LanceField, depth: number) => {
     const [only] = f.children;

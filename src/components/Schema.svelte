@@ -4,11 +4,11 @@
   import { columnColor } from "../lib/colors";
   import { formatBytes } from "../lib/format";
   import { getInspector } from "../lib/inspector.svelte";
-  import { columnFields, schemaLines } from "../lib/lance/schema";
+  import { schemaLines } from "../lib/lance/schema";
 
   const inspector = getInspector();
   const { model } = inspector;
-  const lines = schemaLines(model.fields, columnFields(model.fields, model.version));
+  const lines = schemaLines(model.fields, model.columns);
   const totalBytes = model.columns.reduce((sum, c) => sum + c.bytes, 0) || 1;
 </script>
 
